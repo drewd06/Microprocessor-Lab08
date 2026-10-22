@@ -33,12 +33,24 @@
 #define STOPBITS    1 // 1,2
 #define PARITY      0 // 0=none, 1=odd, 2=even
 
+#define ESC 27	// ASCII 27 = ESC key
+
 /* Your code here.  */
 
 int main(void)
 {
 	/* Your code here.  */
-
+	
+	// configure LED0 as output
+	DDRC |= (1 << PC0);
+	// initialize OFF
+	PORTC &= ~(1 << PC0);
+	
+	// store the last received character
+	unsigned char received;
+	// track next expected "end" character
+	unsigned char end_count = 0;
+	
     /* See the UARTLibrary.h for available calls.
 	 *     	  // initialize the UART
 	 *     	  uart_init(BAUDRATE, DATABITS, STOPBITS, PARITY);
@@ -52,10 +64,51 @@ int main(void)
 	 */
 
 	uart_init(BAUDRATE, DATABITS, STOPBITS, PARITY);
+	
+	// startup message
+	uart_print_startup();
+	
 	while(1)
 	{
 		/* your loop code here */
 		
+		// receive next character
+		received = uart_rx();
+		
+		// blink LED0 to indicate received character
+		PORTC |= (1 << PC0);	// ON
+		_delay_ms(75);			// wait 75ms
+		PORTC &= ~(1 << PC0);	// OFF
+		
+		// ESC check: Restart server
+		if (received == ESC){
+			uart_print_startup();
+			end_count = 0;
+		}
+		
+		// "end" check: Terminate server
+		// end_count = 0: look for 'e'
+		if (received == 'e' && end_count == 0) {
+			end_count = 1;
+		} 
+		// end_count = 1: look for 'n'
+		else if (received == 'n' && end_count == 1) {
+			end_count = 2;
+		} 
+		// end_count = 2: look for 'd'
+		else if (received == 'd' && end_count == 2) {
+			
+			// Complete 'end' sequence detected
+			uart_print_string("\r\nBye\r\n");
+			while(1);  // Halt (infinite loop)
+			
+		}	
+		// not an "end" character: reset count	
+		else {
+			end_count = 0; 
+		}
+		// echo received character
+		uart_tx(received);
 	}
 	return 0;
 }

@@ -59,5 +59,7 @@
 void uart_init(long unsigned int baudrate, unsigned char databits, unsigned char stopbits, unsigned char parity);
 void uart_tx(unsigned char data);
 unsigned char uart_rx(void);
+void uart_print_string(const char* str);
+void uart_print_startup();
 
 #endif /* UARTLIBRARY_H_ */
