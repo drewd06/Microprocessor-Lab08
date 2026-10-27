@@ -33,8 +33,6 @@
 #define STOPBITS    1 // 1,2
 #define PARITY      0 // 0=none, 1=odd, 2=even
 
-#define ESC 27	// ASCII 27 = ESC key
-
 /* Your code here.  */
 
 int main(void)
@@ -80,10 +78,18 @@ int main(void)
 		_delay_ms(75);			// wait 75ms
 		PORTC &= ~(1 << PC0);	// OFF
 		
+		// echo received character
+		uart_tx(received);
+		
 		// ESC check: Restart server
 		if (received == ESC){
 			uart_print_startup();
 			end_count = 0;
+		}
+		
+		// ENTER check: New line
+		if (received == CR){
+			uart_print_string("\r\n");
 		}
 		
 		// "end" check: Terminate server
@@ -107,8 +113,6 @@ int main(void)
 		else {
 			end_count = 0; 
 		}
-		// echo received character
-		uart_tx(received);
 	}
 	return 0;
 }
